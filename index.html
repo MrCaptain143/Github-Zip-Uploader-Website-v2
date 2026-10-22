@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, interactive-widget=resizes-visual">
+<title>ZIP → GitHub Uploader | Captain</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%}
+body{min-height:100vh;background:#050505;color:#f5f5f5;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;display:flex;justify-content:center;align-items:flex-start;padding:28px 16px;overflow-x:hidden;position:relative}
+/* animated glass backdrop */
+.orb{position:fixed;border-radius:50%;filter:blur(60px);opacity:.55;z-index:0;pointer-events:none}
+.o1{width:260px;height:260px;background:#fff;top:-60px;left:-70px;opacity:.28;animation:f1 14s ease-in-out infinite}
+.o2{width:300px;height:300px;background:#8a8a8a;bottom:-90px;right:-80px;animation:f2 17s ease-in-out infinite}
+.o3{width:180px;height:180px;background:#d0d0d0;top:45%;left:55%;opacity:.2;animation:f3 12s ease-in-out infinite}
+@keyframes f1{50%{transform:translate(90px,120px) scale(1.2)}}
+@keyframes f2{50%{transform:translate(-110px,-90px) scale(1.15)}}
+@keyframes f3{50%{transform:translate(-120px,80px) scale(.8)}}
+#loader{position:fixed;inset:0;background:#050505;display:flex;align-items:center;justify-content:center;letter-spacing:8px;font-size:13px;z-index:20;animation:hide .6s ease 2.4s forwards}
+#loader:after{content:"";position:absolute;bottom:42%;width:60px;height:2px;background:linear-gradient(90deg,transparent,#fff,transparent);animation:ld 1s ease-in-out infinite}
+@keyframes ld{0%{transform:translateX(-50px);opacity:0}50%{opacity:1}100%{transform:translateX(50px);opacity:0}}
+@keyframes hide{to{opacity:0;visibility:hidden;pointer-events:none}}
+/* glass card */
+.card{position:relative;z-index:1;width:100%;max-width:440px;height:fit-content;padding:26px 22px;border-radius:30px;
+background:linear-gradient(145deg,rgba(255,255,255,.16),rgba(255,255,255,.04));
+border:1px solid rgba(255,255,255,.22);
+backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);
+box-shadow:0 20px 60px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.35),inset 0 -1px 0 rgba(255,255,255,.06);
+overflow:hidden;animation:cardIn .9s cubic-bezier(.2,.9,.25,1) 2.5s both}
+.card:before{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.14),transparent);transform:skewX(-20deg);animation:sheen 6s ease-in-out 2s infinite;pointer-events:none}
+@keyframes sheen{0%{left:-60%}35%,100%{left:140%}}
+@keyframes cardIn{from{opacity:0;transform:translateY(40px) scale(.94);filter:blur(10px)}to{opacity:1;transform:none;filter:none}}
+.card>*{animation:rise .7s cubic-bezier(.2,.9,.25,1) both}
+.card>*:nth-child(1){animation-delay:2.70s}.card>*:nth-child(2){animation-delay:2.76s}.card>*:nth-child(3){animation-delay:2.82s}
+.card>*:nth-child(4){animation-delay:2.88s}.card>*:nth-child(5){animation-delay:2.94s}.card>*:nth-child(6){animation-delay:3.00s}
+.card>*:nth-child(7){animation-delay:3.06s}.card>*:nth-child(8){animation-delay:3.12s}.card>*:nth-child(9){animation-delay:3.18s}
+.card>*:nth-child(10){animation-delay:3.24s}.card>*:nth-child(13){animation-delay:3.42s}.card>*:nth-child(14){animation-delay:3.48s}.card>*:nth-child(11){animation-delay:3.30s}.card>*:nth-child(12){animation-delay:3.36s}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+h1{font-size:24px;letter-spacing:3px;text-align:center;text-shadow:0 0 24px rgba(255,255,255,.35)}
+.sub{text-align:center;color:#a8a8a8;font-size:13px;margin:6px 0 20px}
+label{display:block;font-size:11px;color:#b5b5b5;margin:14px 0 6px;letter-spacing:1.5px}
+/* glass inputs */
+input[type=text],input[type=password]{width:100%;padding:14px 15px;border-radius:16px;color:#fff;font-size:15px;outline:none;
+background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);
+box-shadow:inset 0 2px 8px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08);
+backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:background-color .3s ease,border-color .3s ease,box-shadow .3s ease,transform .3s ease,color .3s ease}
+input::placeholder{color:#777}
+input[type=text]:focus,input[type=password]:focus{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.6);box-shadow:0 0 0 4px rgba(255,255,255,.08),0 0 24px rgba(255,255,255,.12),inset 0 1px 0 rgba(255,255,255,.2);transform:translateY(-1px)}
+.drop{display:block;margin-top:16px;padding:24px 14px;text-align:center;border:1.5px dashed rgba(255,255,255,.3);border-radius:20px;color:#c4c4c4;font-size:14px;line-height:1.6;cursor:pointer;
+background:rgba(255,255,255,.05);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:background-color .3s ease,border-color .3s ease,box-shadow .3s ease,transform .3s ease,color .3s ease}
+.drop:active{transform:scale(.97)}
+.drop.has{border-style:solid;border-color:rgba(255,255,255,.55);color:#fff;background:rgba(255,255,255,.12);animation:pop .4s ease}
+@keyframes pop{50%{transform:scale(1.03)}}
+.row{display:flex;align-items:center;justify-content:space-between;margin-top:18px;font-size:14px;gap:12px}
+.row small{display:block;color:#8c8c8c;font-size:11px;margin-top:2px}
+.sw{position:relative;width:50px;height:28px;flex:none}
+.sw input{opacity:0;width:100%;height:100%;position:absolute;z-index:2;cursor:pointer}
+.sw span{position:absolute;inset:0;border-radius:20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);box-shadow:inset 0 2px 6px rgba(0,0,0,.4);transition:background-color .35s ease,border-color .35s ease,box-shadow .35s ease}
+.sw span:before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,.5);transition:transform .35s cubic-bezier(.3,1.5,.5,1)}
+.sw input:checked+span{background:rgba(255,255,255,.35);box-shadow:0 0 18px rgba(255,255,255,.25),inset 0 1px 0 rgba(255,255,255,.4)}
+.sw input:checked+span:before{transform:translateX(22px)}
+/* glass button */
+button{position:relative;overflow:hidden;width:100%;margin-top:24px;padding:16px;border-radius:18px;color:#000;font-weight:700;font-size:15px;letter-spacing:1.5px;cursor:pointer;
+background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.72));border:1px solid rgba(255,255,255,.7);
+box-shadow:0 10px 30px rgba(255,255,255,.14),inset 0 1px 0 #fff;transition:transform .2s ease,box-shadow .3s ease}
+button:after{content:"";position:absolute;top:0;left:-80%;width:50%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.9),transparent);transform:skewX(-20deg);animation:sheen2 3.5s ease-in-out 2.5s infinite}
+@keyframes sheen2{0%{left:-80%}40%,100%{left:160%}}
+button:active{transform:scale(.96)}
+button:disabled{opacity:.6;animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.85}}
+.bar{height:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:8px;margin-top:20px;overflow:hidden;box-shadow:inset 0 1px 4px rgba(0,0,0,.4)}
+.bar i{display:block;height:100%;width:0;border-radius:8px;background:linear-gradient(90deg,rgba(255,255,255,.5),#fff,rgba(255,255,255,.5));background-size:200% 100%;animation:shim 1.4s linear infinite;box-shadow:0 0 14px rgba(255,255,255,.6);transition:width .5s cubic-bezier(.2,.9,.25,1)}
+@keyframes shim{to{background-position:-200% 0}}
+#status{margin-top:14px;font-size:13px;color:#c2c2c2;text-align:center;word-break:break-word;min-height:18px}
+#status.swap{animation:swap .35s ease}
+@keyframes swap{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.foot{text-align:center;margin-top:22px;font-size:12px;color:#7a7a7a}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+/* bright white */
+body{color:#fff}
+.card{border-color:rgba(255,255,255,.55);box-shadow:0 20px 60px rgba(0,0,0,.55),0 0 40px rgba(255,255,255,.18),inset 0 1px 0 rgba(255,255,255,.6),inset 0 -1px 0 rgba(255,255,255,.15)}
+.o1{opacity:.5}.o3{opacity:.35}
+h1{color:#fff;text-shadow:0 0 12px #fff,0 0 34px rgba(255,255,255,.6)}
+.sub{color:#e6e6e6}
+label{color:#f0f0f0}
+input[type=text],input[type=password]{border-color:rgba(255,255,255,.35)}
+input[type=text]:focus,input[type=password]:focus{border-color:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.18),0 0 30px rgba(255,255,255,.35),inset 0 1px 0 rgba(255,255,255,.3)}
+.drop{border-color:rgba(255,255,255,.55);color:#fff}
+.bar i{box-shadow:0 0 18px #fff}
+button{background:linear-gradient(180deg,#fff,#ececec);box-shadow:0 0 34px rgba(255,255,255,.45),inset 0 1px 0 #fff}
+#status{color:#fff}
+.foot{color:#fff;text-shadow:0 0 10px rgba(255,255,255,.8);letter-spacing:.5px}
+/* RGB smooth footer */
+.foot{color:transparent;text-shadow:none;background:linear-gradient(90deg,#ff0040,#ffea00,#00ff6a,#00d5ff,#7a00ff,#ff00d4,#ff0040);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:rise .7s cubic-bezier(.2,.9,.25,1) 3.48s both,rgbflow 5s linear infinite;filter:drop-shadow(0 0 8px rgba(255,255,255,.35));font-weight:600}
+@keyframes rgbflow{to{background-position:-300% 0}}
+/* split: white text + RGB name */
+.foot{background:none;-webkit-background-clip:border-box;background-clip:border-box;color:#fff;-webkit-text-fill-color:#fff;text-shadow:0 0 10px rgba(255,255,255,.8);filter:none;animation:rise .7s cubic-bezier(.2,.9,.25,1) 3.48s both}
+.foot .rgb{font-weight:700;background:linear-gradient(90deg,#ff0040,#ffea00,#00ff6a,#00d5ff,#7a00ff,#ff00d4,#ff0040);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;text-shadow:none;animation:rgbflow 5s linear infinite;filter:drop-shadow(0 0 8px rgba(255,255,255,.35))}
+/* green when ON */
+.sw input:checked+span{background:rgba(0,255,106,.55);border-color:rgba(0,255,106,.9);box-shadow:0 0 18px rgba(0,255,106,.6),inset 0 1px 0 rgba(255,255,255,.45)}
+/* backgrounds */
+.orb{display:none}
+#cvL{position:absolute;inset:0;width:100%;height:100%}
+#loader .lt{position:relative;z-index:1;text-shadow:0 0 14px #fff}
+#cvM{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+/* fit one screen, no scroll */
+html,body{height:100%;overflow:hidden}
+body{height:100vh;height:100dvh;min-height:0;align-items:center;padding:12px 14px}
+.card{max-width:min(440px,100%);max-height:100%;padding:clamp(12px,2.6vh,26px) 20px}
+h1{font-size:clamp(18px,3.4vh,24px)}
+.sub{margin:clamp(2px,.8vh,6px) 0 clamp(8px,2vh,20px)}
+label{margin:clamp(7px,1.6vh,14px) 0 clamp(3px,.7vh,6px)}
+input[type=text],input[type=password]{padding:clamp(9px,1.8vh,14px) 15px}
+.drop{margin-top:clamp(8px,1.8vh,16px);padding:clamp(12px,2.6vh,24px) 14px}
+.row{margin-top:clamp(8px,1.8vh,18px)}
+button{margin-top:clamp(10px,2.4vh,24px);padding:clamp(11px,2vh,16px)}
+.bar{margin-top:clamp(10px,2vh,20px)}
+#status{margin-top:clamp(6px,1.4vh,14px)}
+.foot{margin-top:clamp(8px,2vh,22px)}
+/* random green / blue progress bar (picked on every refresh) */
+:root{--b1:rgba(0,255,106,.55);--b2:#00ff6a;--bg:#00ff6a}
+.bar i{background:linear-gradient(90deg,var(--b1),var(--b2),var(--b1));background-size:200% 100%;box-shadow:0 0 18px var(--bg)}
+/* full height card + see-through glass */
+body{align-items:stretch;padding:10px 12px}
+.card{height:100%;max-height:none;display:flex;flex-direction:column;justify-content:space-evenly;
+background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.015));
+backdrop-filter:blur(2px) saturate(140%);-webkit-backdrop-filter:blur(2px) saturate(140%)}
+input[type=text],input[type=password],.drop{background:rgba(255,255,255,.05);backdrop-filter:none;-webkit-backdrop-filter:none}
+/* toasts (top right) */
+#toasts{position:fixed;top:max(12px,env(safe-area-inset-top));right:12px;z-index:60;display:flex;flex-direction:column;gap:10px;width:min(86vw,320px);pointer-events:none}
+.toast{display:flex;gap:10px;align-items:flex-start;padding:13px 15px;border-radius:18px;font-size:13px;line-height:1.4;color:#fff;word-break:break-word;
+background:linear-gradient(145deg,rgba(255,255,255,.18),rgba(255,255,255,.06));border:1px solid rgba(255,255,255,.4);
+backdrop-filter:blur(18px) saturate(180%);-webkit-backdrop-filter:blur(18px) saturate(180%);
+box-shadow:0 10px 30px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.45);animation:tin .5s cubic-bezier(.2,.9,.25,1) both}
+.toast.ok{border-color:rgba(0,255,106,.85);box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 22px rgba(0,255,106,.35),inset 0 1px 0 rgba(255,255,255,.45)}
+.toast.err{border-color:rgba(255,60,80,.9);box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 22px rgba(255,60,80,.4),inset 0 1px 0 rgba(255,255,255,.45)}
+.toast.warn{border-color:rgba(255,200,0,.85)}
+.toast.out{animation:tout .4s ease forwards}
+@keyframes tin{from{opacity:0;transform:translateX(60px) scale(.9)}to{opacity:1;transform:none}}
+@keyframes tout{to{opacity:0;transform:translateX(60px) scale(.9)}}
+/* success popup (center) */
+#okpop{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+#okpop.show{display:flex;animation:fadein .3s ease both}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.okbox{width:min(88vw,340px);padding:26px 22px;border-radius:28px;text-align:center;
+background:linear-gradient(145deg,rgba(255,255,255,.2),rgba(255,255,255,.06));border:1px solid rgba(255,255,255,.5);
+backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);
+box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 40px rgba(255,255,255,.15),inset 0 1px 0 rgba(255,255,255,.55);animation:pp .6s cubic-bezier(.2,1.3,.4,1) both}
+@keyframes pp{from{opacity:0;transform:scale(.7) translateY(30px)}to{opacity:1;transform:none}}
+.okbox .tick{font-size:42px;filter:drop-shadow(0 0 14px rgba(0,255,106,.7))}
+.okbox h2{font-size:20px;letter-spacing:2px;margin-top:6px;text-shadow:0 0 14px rgba(255,255,255,.6)}
+.okbox p{font-size:13px;color:#e6e6e6;margin-top:8px;word-break:break-word}
+.igrow{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:20px;padding:12px 14px;border-radius:18px;text-decoration:none;color:#fff;
+background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.3);transition:transform .2s ease}
+.igrow:active{transform:scale(.96)}
+.igrow svg{width:40px;height:40px;flex:none;filter:drop-shadow(0 0 10px rgba(214,41,118,.6))}
+.igrow b{font-size:15px;letter-spacing:.5px}
+.igrow small{display:block;font-size:11px;color:#bbb;margin-top:1px}
+.okbox button{margin-top:18px}
+/* paste button */
+.pw{position:relative}
+.pw input{padding-right:92px!important}
+.pastebtn{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:auto;margin:0;padding:8px 11px;border-radius:12px;font-size:11px;font-weight:700;letter-spacing:1px;color:#fff;display:flex;align-items:center;gap:5px;
+background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+.pastebtn:after{display:none}
+.pastebtn:active{transform:translateY(-50%) scale(.93)}
+/* glass shine on the card: only once */
+.card:before{animation:sheen 1.8s ease-in-out 3.7s 1 both}
+@keyframes sheen{0%{left:-60%;opacity:1}99%{left:140%;opacity:1}100%{left:140%;opacity:0}}
+/* red error / green success toasts */
+.toast.ok{background:linear-gradient(145deg,rgba(0,255,106,.42),rgba(0,255,106,.14));border-color:rgba(0,255,106,.9)}
+.toast.err{background:linear-gradient(145deg,rgba(255,50,70,.46),rgba(255,50,70,.16));border-color:rgba(255,70,90,.95)}
+.toast.warn{background:linear-gradient(145deg,rgba(255,200,0,.4),rgba(255,200,0,.14))}
+.okbox{border-color:rgba(0,255,106,.8);box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 40px rgba(0,255,106,.3),inset 0 1px 0 rgba(255,255,255,.55)}
+/* icon-only paste button */
+.pw input{padding-right:58px!important}
+.pastebtn{padding:9px 12px}
+/* solid red errors, solid green success */
+.toast.err,.toast.warn{background:linear-gradient(145deg,rgba(255,30,50,.78),rgba(190,0,30,.52));border-color:#ff4d5e;box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 26px rgba(255,40,60,.55),inset 0 1px 0 rgba(255,255,255,.4)}
+.toast.ok{background:linear-gradient(145deg,rgba(0,230,90,.72),rgba(0,150,60,.48));border-color:#2dff84;box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 26px rgba(0,255,110,.55),inset 0 1px 0 rgba(255,255,255,.4)}
+/* success popup sits above exact center */
+#okpop{align-items:center;padding-bottom:28vh}
+/* toast box fits its text */
+#toasts{width:auto;max-width:min(86vw,320px);align-items:flex-end}
+.toast{width:fit-content;max-width:100%}
+/* paste icon only, no circle/box around it */
+.pastebtn{background:none!important;border:0!important;box-shadow:none!important;border-radius:0;padding:10px 12px;backdrop-filter:none;-webkit-backdrop-filter:none}
+.pastebtn:active{transform:translateY(-50%) scale(.85);opacity:.7}
+/* red highlight on the fields that have an error */
+input.bad,.drop.bad{border-color:#ff4d5e!important;box-shadow:0 0 0 3px rgba(255,60,80,.28),0 0 22px rgba(255,60,80,.35)!important;transition:background-color .3s ease,border-color .3s ease,box-shadow .3s ease,transform .3s ease,color .3s ease}
+/* hover feel for mouse users */
+@media (hover:hover){
+  button:not(.pastebtn):hover{transform:translateY(-2px);box-shadow:0 14px 38px rgba(255,255,255,.28),inset 0 1px 0 #fff}
+  .drop:hover{background:rgba(255,255,255,.1);border-color:#fff}
+  .pastebtn:hover{opacity:.75}
+  .igrow:hover{background:rgba(255,255,255,.16)}
+}
+/* PC / desktop-site mode */
+@media (min-width:700px){
+  body{align-items:center;padding:20px}
+  .card{height:auto;max-height:min(100%,800px);width:100%;max-width:500px;margin:auto;padding:32px 32px;justify-content:center;overflow-y:auto;scrollbar-width:none}
+  .card::-webkit-scrollbar{display:none}
+  h1{font-size:28px}
+  .sub{font-size:14px}
+  label{font-size:12px}
+  input[type=text],input[type=password]{font-size:16px}
+  #toasts{top:18px;right:20px}
+}
+/* ---- stable layout for every screen ---- */
+.toast{animation:none!important;will-change:transform,opacity}
+.col{display:contents}
+.col>*{animation:rise .7s cubic-bezier(.2,.9,.25,1) var(--d,2.7s) both}
+.colA>*:nth-child(1){--d:2.70s}
+.colA>*:nth-child(2){--d:2.76s}
+.colA>*:nth-child(3){--d:2.82s}
+.colA>*:nth-child(4){--d:2.88s}
+.colA>*:nth-child(5){--d:2.94s}
+.colA>*:nth-child(6){--d:3.00s}
+.colA>*:nth-child(7){--d:3.06s}
+.colA>*:nth-child(8){--d:3.12s}
+.colB>*:nth-child(1){--d:3.18s}
+.colB>*:nth-child(2){--d:3.24s}
+.colB>*:nth-child(3){--d:3.30s}
+.colB>*:nth-child(4){--d:3.36s}
+.colB>*:nth-child(5){--d:3.42s}
+.colB>*:nth-child(6){--d:3.48s}
+/* phone turned sideways / short landscape windows: two columns */
+@media (orientation:landscape) and (max-height:560px){
+  body{padding:8px 12px}
+  .card{flex-direction:row;align-items:center;justify-content:center;gap:28px;width:100%;max-width:min(980px,100%);height:100%;max-height:none;padding:12px 26px;overflow:hidden}
+  .col{display:flex;flex-direction:column;flex:1 1 0;min-width:0;justify-content:center}
+  h1{font-size:19px}
+  .sub{font-size:12px;margin:2px 0 4px}
+  label{margin:6px 0 3px;font-size:10px}
+  input[type=text],input[type=password]{padding:9px 13px;font-size:14px}
+  .drop{margin-top:0;padding:12px 10px;font-size:13px}
+  .row{margin-top:10px}
+  button{margin-top:10px;padding:11px}
+  .bar{margin-top:10px}
+  #status{margin-top:6px}
+  .foot{margin-top:8px}
+  #okpop{padding-bottom:6vh}
+  #toasts{top:8px;right:10px}
+}
+/* very small phones */
+@media (max-width:360px){.card{padding-left:14px;padding-right:14px}h1{letter-spacing:1.5px}}
+/* PC layout: heading on top, credit at the bottom, narrow card in the middle */
+#pchead,#pcfoot{display:none}
+@media (min-width:700px) and (min-height:561px){
+  body{flex-direction:column;align-items:center;justify-content:center;gap:clamp(10px,2.6vh,24px);padding:16px}
+  #pchead,#pcfoot{display:block;position:relative;z-index:1;text-align:center;animation:rise .7s cubic-bezier(.2,.9,.25,1) 2.7s both}
+  #pchead h1{font-size:clamp(24px,4.4vh,34px)}
+  #pchead .sub{margin:6px 0 0;font-size:14px}
+  #pcfoot .foot{margin:0;animation:none}
+  .card h1,.card .sub,.card .foot{display:none}
+  .card{height:auto;flex:0 1 auto;max-width:460px;max-height:calc(100dvh - 190px);margin:0}
+}
+/* Instagram-colour outline rolling around the success popup */
+@property --ang{syntax:'<angle>';inherits:false;initial-value:0deg}
+.okbox{position:relative;border:0;box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 44px rgba(214,41,118,.3),inset 0 1px 0 rgba(255,255,255,.5)}
+.okbox:before{content:"";position:absolute;inset:0;border-radius:inherit;padding:3px;pointer-events:none;
+  background:conic-gradient(from var(--ang),#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5,#feda75);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
+  animation:igspin 3s linear infinite}
+@keyframes igspin{to{--ang:360deg}}
+
+/* phone turned sideways: title on top, 3 x 2 boxes, credit at the bottom */
+@media (orientation:landscape) and (max-height:560px){
+  .card{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto repeat(6,auto) auto auto auto;column-gap:18px;row-gap:0;align-content:center;align-items:stretch;padding:10px 24px}
+  .col{display:contents}
+  h1{text-align:center;font-size:20px;margin-bottom:6px}
+  .colA>:nth-child(1){grid-area:1/1/2/3}
+  .colA>:nth-child(2){display:none}
+  .colA>:nth-child(3){grid-area:2/1/3/2}
+  .colA>:nth-child(4){grid-area:3/1/4/2}
+  .colA>:nth-child(5){grid-area:4/1/5/2}
+  .colA>:nth-child(6){grid-area:5/1/6/2}
+  .colA>:nth-child(7){grid-area:6/1/7/2}
+  .colA>:nth-child(8){grid-area:7/1/8/2}
+  .colB>:nth-child(1){grid-area:2/2/4/3}
+  .colB>:nth-child(2){grid-area:4/2/6/3}
+  .colB>:nth-child(3){grid-area:6/2/8/3}
+  .colB>:nth-child(4){grid-area:8/1/9/3}
+  .colB>:nth-child(5){grid-area:9/1/10/3}
+  .colB>:nth-child(6){grid-area:10/1/11/3}
+  .drop{margin:0;height:100%;display:flex;align-items:center;justify-content:center;padding:6px 8px;font-size:12px;line-height:1.35}
+  .row{margin:6px 0 0;padding:0 14px;border:1px solid rgba(255,255,255,.22);border-radius:16px;background:rgba(255,255,255,.05);align-self:stretch}
+  .row small{font-size:10px}
+  #go{margin:6px 0 0;padding:0;height:calc(100% - 6px)}
+  .drop{margin-top:6px;height:calc(100% - 6px)}
+  .bar{margin-top:8px}
+  #status{margin-top:5px;font-size:12px}
+  .foot{margin-top:6px;text-align:center}
+}
+/* live blinking dot in the Ready line */
+.live{display:inline-block;width:9px;height:9px;border-radius:50%;background:#00ff6a;margin-right:8px;vertical-align:middle;animation:liveBlink 1.2s ease-in-out infinite}
+@keyframes liveBlink{0%,100%{opacity:1;transform:scale(1);box-shadow:0 0 0 0 rgba(0,255,106,.75)}50%{opacity:.4;transform:scale(.8);box-shadow:0 0 0 7px rgba(0,255,106,0)}}
+
+/* new title animation: blur-in with spreading letters, then a soft breathing glow */
+.col>h1,#pchead h1{animation:titleIn 1.1s cubic-bezier(.2,.9,.25,1) var(--d,2.7s) both,titleGlow 3.2s ease-in-out calc(var(--d,2.7s) + 1.2s) infinite alternate}
+@keyframes titleIn{from{opacity:0;letter-spacing:16px;filter:blur(10px)}to{opacity:1;letter-spacing:3px;filter:blur(0)}}
+@keyframes titleGlow{from{text-shadow:0 0 10px rgba(255,255,255,.45)}to{text-shadow:0 0 14px #fff,0 0 40px rgba(255,255,255,.85)}}
+
+/* phone sideways (final): wide card, title + subtitle on top, six equal boxes, credit at the bottom */
+@media (orientation:landscape) and (max-height:560px){
+  body{padding:6px max(10px,env(safe-area-inset-right)) 6px max(10px,env(safe-area-inset-left))}
+  .card{max-width:min(1100px,100%);width:100%;height:100%;padding:10px 30px;column-gap:22px;align-content:stretch;
+    grid-template-rows:auto auto minmax(8px,1fr) auto auto auto auto auto auto auto auto minmax(4px,.7fr) auto}
+  h1{font-size:21px;margin:0}
+  .colA>:nth-child(1){grid-area:1/1/2/3}
+  .colA>:nth-child(2){display:block;grid-area:2/1/3/3;text-align:center;font-size:12px;margin:3px 0 0}
+  .colA>:nth-child(3){grid-area:4/1/5/2}
+  .colA>:nth-child(4){grid-area:5/1/6/2}
+  .colA>:nth-child(5){grid-area:6/1/7/2}
+  .colA>:nth-child(6){grid-area:7/1/8/2}
+  .colA>:nth-child(7){grid-area:8/1/9/2}
+  .colA>:nth-child(8){grid-area:9/1/10/2}
+  .colB>:nth-child(1){grid-area:5/2/6/3}
+  .colB>:nth-child(2){grid-area:7/2/8/3}
+  .colB>:nth-child(3){grid-area:9/2/10/3}
+  .colB>:nth-child(4){grid-area:10/1/11/3}
+  .colB>:nth-child(5){grid-area:11/1/12/3}
+  .colB>:nth-child(6){grid-area:13/1/14/3}
+  label{margin:6px 0 3px}
+  .pw,#token,#repo,#branch,.drop,.row,#go{height:46px}
+  .drop,.row,#go{margin:0}
+  .drop{padding:4px 8px}
+  .row{padding:0 14px}
+  #go{padding:0}
+  .bar{margin-top:8px}
+}
+/* smaller live dot, sits before the word */
+.live{width:5px;height:5px;margin-right:6px;vertical-align:middle;position:relative;top:-1px;box-shadow:0 0 5px #00ff6a;animation:liveBlink2 1.2s ease-in-out infinite}
+@keyframes liveBlink2{0%,100%{opacity:1;transform:scale(1);box-shadow:0 0 0 0 rgba(0,255,106,.8)}50%{opacity:.35;transform:scale(.8);box-shadow:0 0 0 4px rgba(0,255,106,0)}}
+/* Instagram popup: exact centre on every screen */
+#okpop,#okpop.show{align-items:center;justify-content:center;padding:16px!important}
+.okbox{margin:auto;max-height:calc(100dvh - 32px)}
+/* brighter premium Instagram outline + soft rolling glow (centering untouched) */
+.okbox{box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 46px rgba(255,31,107,.32),inset 0 1px 0 rgba(255,255,255,.55)}
+.okbox:before{background:conic-gradient(from var(--ang),#ffd800,#ff8a00,#ff1f6b,#d800f0,#6a5cff,#ffd800);filter:saturate(1.5) brightness(1.2)}
+.okbox:after{content:"";position:absolute;inset:-18px;border-radius:46px;padding:18px;pointer-events:none;
+  background:conic-gradient(from var(--ang),#ffd800,#ff8a00,#ff1f6b,#d800f0,#6a5cff,#ffd800);
+  filter:blur(14px) saturate(1.6) brightness(1.15);opacity:.6;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
+  animation:igspin 3s linear infinite}
+.igrow svg{filter:drop-shadow(0 0 10px rgba(255,31,107,.75)) saturate(1.2)}
+/* clean Instagram popup: bright rolling outline, only a light soft glow */
+.okbox:after{display:none!important}
+.okbox{box-shadow:0 18px 50px rgba(0,0,0,.55),0 0 22px rgba(255,31,107,.22),0 0 34px rgba(106,92,255,.16),inset 0 1px 0 rgba(255,255,255,.45)}
+.okbox:before{filter:saturate(1.25) brightness(1.1)}
+.igrow svg{filter:drop-shadow(0 0 6px rgba(255,31,107,.45))}
+/* boxes stay still (no entrance, no vanishing on rotate); only title, subtitle and credit animate */
+.colA>:nth-child(n+3),.colB>:nth-child(-n+5):not(.has){animation:none}
+/* no entrance animation when the page opens; title, subtitle and credit animate only on rotation (script) */
+.col>h1,#pchead h1{animation:titleGlow 3.2s ease-in-out infinite alternate}
+.colA>:nth-child(2),.colB>:nth-child(6){animation:none}
+#pchead,#pcfoot,#pcfoot .foot{animation:none!important}
+/* smooth handoff after loading: light entrance (no filter), no heavy backdrop blur on the full-screen card */
+@keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}}
+.card{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;will-change:opacity,transform}
+
+/* ===================== SMOOTHNESS PASS ===================== */
+/* while the window is being zoomed / rotated: no transitions, decorative loops paused */
+html.resizing *,html.resizing *:before,html.resizing *:after{transition:none!important}
+html.resizing .foot .rgb,html.resizing button:after,html.resizing .live,html.resizing .live:after,html.resizing h1:after,html.resizing .bar i{animation-play-state:paused!important}
+.card{will-change:auto}
+/* sheen: transform only (no layout every frame) */
+.card:before{left:0;transform:translateX(-150%) skewX(-20deg);animation:sheenT 1.8s ease-in-out 3.7s 1 both}
+@keyframes sheenT{0%{transform:translateX(-150%) skewX(-20deg);opacity:1}99%{transform:translateX(350%) skewX(-20deg);opacity:1}100%{transform:translateX(350%) skewX(-20deg);opacity:0}}
+button:after{left:0;transform:translateX(-160%) skewX(-20deg);animation:sheen2T 3.5s ease-in-out 2.5s infinite;will-change:transform}
+@keyframes sheen2T{0%{transform:translateX(-160%) skewX(-20deg)}40%,100%{transform:translateX(320%) skewX(-20deg)}}
+/* title glow: static shadow + a layer that only fades (compositor, no repaint) */
+.col>h1,#pchead h1{animation:none;position:relative;text-shadow:0 0 10px rgba(255,255,255,.45)}
+h1:after{content:attr(data-t);position:absolute;inset:0;pointer-events:none;color:transparent;text-shadow:0 0 14px #fff,0 0 40px rgba(255,255,255,.85);animation:glowBreath 3.2s ease-in-out infinite alternate}
+@keyframes glowBreath{from{opacity:0}to{opacity:1}}
+/* credit RGB flow without the costly filter */
+.foot .rgb{filter:none}
+/* progress shimmer only while uploading */
+.bar i{animation:none}
+#go:disabled~.bar i{animation:shim 1.4s linear infinite}
+/* live dot: ring is a scaled/faded layer (no box-shadow repaint) */
+.live{animation:liveBlink3 1.2s ease-in-out infinite}
+.live:after{content:"";position:absolute;inset:0;border-radius:50%;background:#00ff6a;animation:liveRing 1.2s ease-out infinite}
+@keyframes liveBlink3{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+@keyframes liveRing{0%{transform:scale(1);opacity:.75}100%{transform:scale(3.6);opacity:0}}
+/* sideways grid: columns can never be stretched by animated text */
+@media (orientation:landscape) and (max-height:560px){.card{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<canvas id="cvM"></canvas>
+<div id="loader"><canvas id="cvL"></canvas><span class="lt">LOADING</span></div>
+<div id="pchead"></div>
+<div class="card"><div class="col colA">
+  <h1> ZIP → GITHUB</h1>
+  <p class="sub">Ꭼxᴛʀᴀᴄᴛ &amp; ᴘᴜsʜ sᴛʀᴀɪɢʜᴛ ᴛᴏ ʏᴏᴜʀ ʀᴇᴘᴏ ʀᴏᴏᴛ</p>
+
+  <label>🔐 GITHUB TOKEN</label>
+  <div class="pw"><input type="password" id="token" placeholder="ghp_xxxxxxxx" autocomplete="off"><button type="button" id="paste" class="pastebtn" aria-label="Paste"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="8" height="4" rx="1.5"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/></svg></button></div>
+
+  <label>📦 REPOSITORY</label>
+  <input type="text" id="repo" placeholder="username/repository" autocapitalize="off" autocorrect="off">
+
+  <label>🌿 BRANCH</label>
+  <input type="text" id="branch" value="main" autocapitalize="off">
+
+</div><div class="col colB">
+  <label class="drop" id="drop">
+    <input type="file" id="zip" accept=".zip" hidden>
+    <span id="dropText">💾 SELECT ZIP FILE<br> TAP TO CHOOSE A ZIP FILE</span>
+  </label>
+
+  <div class="row">
+    <div>Ꮪᴛʀɪᴘ ʀᴏᴏᴛ ғᴏʟᴅᴇʀ<small>Ꭱᴇᴍᴏᴠᴇ ᴛʜᴇ ᴛᴏᴘ-ʟᴇᴠᴇʟ ғᴏʟᴅᴇʀ ɪɴsɪᴅᴇ ᴛʜᴇ ᴢɪᴘ</small></div>
+    <div class="sw"><input type="checkbox" id="strip" checked><span></span></div>
+  </div>
+
+  <button id="go">EXTRACT &amp; PUSH</button>
+  <div class="bar"><i id="fill"></i></div>
+  <div id="status"><span class="live"></span>Ꭱᴇᴀᴅʏ...</div>
+  <div class="foot">&lt;/&gt; Ꭰᴇᴠᴇʟᴏᴘᴇᴅ Ᏼʏㅤ<b class="rgb">ᎷʀㅤᏟᴀᴘ֟፝ᴛᴀɪɴㅤᎧғᴄ</b></div>
+</div></div>
+<div id="pcfoot"></div>
+
+<div id="toasts"></div>
+<div id="okpop"><div class="okbox">
+  <a class="igrow" id="iglink" href="#" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" aria-label="Instagram"><defs><linearGradient id="igg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#ffd800"/><stop offset=".28" stop-color="#ff8a00"/><stop offset=".55" stop-color="#ff1f6b"/><stop offset=".78" stop-color="#d800f0"/><stop offset="1" stop-color="#6a5cff"/></linearGradient></defs><rect width="24" height="24" rx="6.5" fill="url(#igg)"/><rect x="5" y="5" width="14" height="14" rx="4.2" fill="none" stroke="#fff" stroke-width="1.7"/><circle cx="12" cy="12" r="3.3" fill="none" stroke="#fff" stroke-width="1.7"/><circle cx="16.3" cy="7.7" r="1" fill="#fff"/></svg>
+    <div><b id="igname"></b><small>Follow on Instagram</small></div>
+  </a>
+  <button id="okclose">OK</button>
+</div></div>
+
+<script>
+/* auto size units: B, KB, MB, GB, TB, PB */
+function fmtSize(b){
+  const u = ['B','KB','MB','GB','TB','PB']; let i = 0, n = b;
+  while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+  return (i === 0 ? n : n.toFixed(n >= 100 ? 0 : n >= 10 ? 1 : 2)) + ' ' + u[i];
+}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const setStatus = (t, p) => { const el = $('status'); el.textContent = t; el.classList.remove('swap'); void el.offsetWidth; el.classList.add('swap'); if (p != null) $('fill').style.width = p + '%'; };
+
+
+
+// remember repo/branch only (never the token)
+try { $('repo').value = localStorage.getItem('cap_repo') || ''; $('branch').value = localStorage.getItem('cap_branch') || 'main'; } catch (e) {}
+
+$('zip').addEventListener('change', e => {
+  const f = e.target.files[0];
+  $('drop').classList.toggle('has', !!f);
+  $('dropText').innerHTML = f ? '✅ ' + f.name.replace(/</g, '') + '<br>' + fmtSize(f.size) : ' SELECT ZIP FILE<br>TAP TO CHOOSE A ZIP FILE';
+});
+
+async function gh(path, token, method = 'GET', body) {
+  const r = await fetch('https://api.github.com' + path, {
+    method,
+    headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.message || ('HTTP ' + r.status));
+  return j;
+}
+
+$('go').addEventListener('click', async () => {
+  const token = $('token').value.trim(), repo = $('repo').value.trim().replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, ''), branch = $('branch').value.trim() || 'main';
+  const file = $('zip').files[0];
+  const errs = [], bad = [];
+  if (!token) { errs.push('🔐 GitHub token is required'); bad.push($('token')); }
+  if (!repo) { errs.push('📦 Empty - username/repository'); bad.push($('repo')); }
+  else if (!repo.includes('/')) { errs.push('📦 Repository must look like username/repository'); bad.push($('repo')); }
+  if (!file) { errs.push('📁 Choose a zip file'); bad.push($('drop')); }
+  if (errs.length) {
+    errs.forEach((m, i) => setTimeout(() => toast('err', m), i * 170));
+    bad.forEach(el => { el.classList.add('bad'); setTimeout(() => el.classList.remove('bad'), 2200); });
+    return setStatus('⚠️ ' + errs.length + (errs.length > 1 ? ' Ꭼʀʀᴏʀs Ꭰᴇᴛᴇᴄᴛᴇᴅ' : 'Ꭼʀʀᴏʀs Ꭰᴇᴛᴇᴄᴛᴇᴅ'));
+  }
+  try { localStorage.setItem('cap_repo', repo); localStorage.setItem('cap_branch', branch); } catch (e) {}
+
+  $('go').disabled = true;
+  try {
+    setStatus('📖 Ꭱᴇᴀᴅɪɴɢ ᴢɪᴘ...', 3);
+    const zip = await JSZip.loadAsync(file);
+    let entries = Object.values(zip.files).filter(f => !f.dir && !f.name.startsWith('__MACOSX') && !f.name.endsWith('.DS_Store'));
+    if (!entries.length) throw new Error('ZIP is empty');
+
+    let prefix = '';
+    if ($('strip').checked) {
+      const tops = new Set(entries.map(f => f.name.split('/')[0]));
+      if (tops.size === 1 && entries.every(f => f.name.includes('/'))) prefix = [...tops][0] + '/';
+    }
+
+    setStatus('🔎 Ꮯʜᴇᴄᴋɪɴɢ ʙʀᴀɴᴄʜ...', 6);
+    let parent = null, baseTree = null;
+    try {
+      const ref = await gh(`/repos/${repo}/git/ref/heads/${branch}`, token);
+      parent = ref.object.sha;
+      baseTree = (await gh(`/repos/${repo}/git/commits/${parent}`, token)).tree.sha;
+    } catch (e) { /* new/empty branch */ }
+
+    const tree = [];
+    for (let i = 0; i < entries.length; i++) {
+      const f = entries[i];
+      setStatus(`⬆️ ᴜᴘʟᴏᴀᴅɪɴɢ ${i + 1}/${entries.length}: ${f.name.slice(prefix.length)}`, 10 + (i / entries.length) * 75);
+      const b64 = await f.async('base64');
+      const blob = await gh(`/repos/${repo}/git/blobs`, token, 'POST', { content: b64, encoding: 'base64' });
+      tree.push({ path: f.name.slice(prefix.length), mode: '100644', type: 'blob', sha: blob.sha });
+    }
+
+    setStatus('⚙️ Ᏼᴜɪʟᴅɪɴɢ ᴄᴏᴍᴍᴇɴᴛ...', 88);
+    const newTree = await gh(`/repos/${repo}/git/trees`, token, 'POST', baseTree ? { base_tree: baseTree, tree } : { tree });
+    const commit = await gh(`/repos/${repo}/git/commits`, token, 'POST', {
+      message: '</> Ꭰᴇᴠᴇʟᴏᴘᴇᴅ  ᏴʏㅤᎷʀㅤᏟᴀᴘ֟፝ᴛᴀɪɴㅤᎧғᴄ', tree: newTree.sha, parents: parent ? [parent] : []
+    });
+
+    setStatus('🚀 Ꮲᴜsʜɪɴɢ...', 95);
+    if (parent) await gh(`/repos/${repo}/git/refs/heads/${branch}`, token, 'PATCH', { sha: commit.sha, force: false });
+    else await gh(`/repos/${repo}/git/refs`, token, 'POST', { ref: 'refs/heads/' + branch, sha: commit.sha });
+
+    setStatus(`✅ Ꭰᴏɴᴇ! ${entries.length} ғɪʟᴇs ᴘᴜsʜᴇᴅ ᴛᴏ ${repo}@${branch}`, 100); window._afterOk = () => { toast('ok', '✅ Done!'); setTimeout(() => toast('ok', '🚀 Upload Successful'), 650); }; showSuccess(entries.length, repo, branch);
+  } catch (e) {
+    setStatus('❌ ' + e.message, 0); toast('err', '❌ ' + e.message);
+  }
+  $('go').disabled = false;
+});
+</script>
+<script>
+/* background animations: loader = Starfield Warp, page = Particle Network (time-based, resize-safe) */
+(function(){
+  const R=(a,b)=>a+Math.random()*(b-a);
+  function star(s){
+    const st=Array.from({length:200},()=>({x:R(-1,1),y:R(-1,1),z:R(.05,1)}));
+    return function(){const x=s.x,W=s.W,H=s.H;x.fillStyle='#000';x.fillRect(0,0,W,H);const cx=W/2,cy=H/2,k=Math.max(W,H)*.6;
+      st.forEach(a=>{const pz=a.z;a.z-=.008*s.k;if(a.z<=.02){a.x=R(-1,1);a.y=R(-1,1);a.z=1;return}
+        const x1=cx+a.x/a.z*k*.3,y1=cy+a.y/a.z*k*.3,x0=cx+a.x/pz*k*.3,y0=cy+a.y/pz*k*.3;
+        x.strokeStyle='rgba(255,255,255,'+(1-a.z)+')';x.lineWidth=(1-a.z)*2.2;x.beginPath();x.moveTo(x0,y0);x.lineTo(x1,y1);x.stroke()})};
+  }
+  function net(s){
+    const N=Math.min(60,Math.floor(s.W*s.H/9000));
+    const p=Array.from({length:N},()=>({x:R(0,s.W),y:R(0,s.H),vx:R(-.4,.4),vy:R(-.4,.4)}));
+    const NB=5,bk=Array.from({length:NB},()=>[]),L=120,L2=L*L;
+    const f=function(){const x=s.x,W=s.W,H=s.H,k=s.k;x.fillStyle='#050505';x.fillRect(0,0,W,H);
+      for(let i=0;i<N;i++){const a=p[i];a.x+=a.vx*k;a.y+=a.vy*k;if(a.x<0||a.x>W)a.vx*=-1;if(a.y<0||a.y>H)a.vy*=-1}
+      for(let i=0;i<NB;i++)bk[i].length=0;
+      for(let i=0;i<N;i++){const a=p[i];
+        for(let j=i+1;j<N;j++){const b=p[j],dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy;
+          if(d2<L2){const t=Math.min(NB-1,(Math.sqrt(d2)/L*NB)|0);bk[t].push(a.x,a.y,b.x,b.y)}}}
+      x.lineWidth=1;
+      for(let i=0;i<NB;i++){const q=bk[i];if(!q.length)continue;
+        x.strokeStyle='rgba(255,255,255,'+(.35*(1-(i+.5)/NB)).toFixed(3)+')';x.beginPath();
+        for(let m=0;m<q.length;m+=4){x.moveTo(q[m],q[m+1]);x.lineTo(q[m+2],q[m+3])}x.stroke()}
+      x.fillStyle='rgba(255,255,255,.8)';x.beginPath();
+      for(let i=0;i<N;i++){const a=p[i];x.moveTo(a.x+1.8,a.y);x.arc(a.x,a.y,1.8,0,7)}x.fill()};
+    f.resize=(ow,oh)=>p.forEach(a=>{a.x*=s.W/ow;a.y*=s.H/oh});   // keep the dots where they were when the screen turns
+    return f;
+  }
+  let busy=false;                                                    // true while zooming / rotating / resizing
+  function run(id,build,stopMs,maxDpr){
+    const cv=document.getElementById(id);if(!cv)return;
+    const s={x:cv.getContext('2d'),W:0,H:0,k:1};let draw=null,on=true;
+    function rs(){
+      if(!cv.isConnected)return;
+      const ow=s.W||1,oh=s.H||1,D=Math.min(devicePixelRatio||1,maxDpr);
+      cv.style.width='';cv.style.height='';
+      const W=cv.clientWidth||innerWidth,H=cv.clientHeight||innerHeight;
+      s.W=W;s.H=H;cv.style.width=W+'px';cv.style.height=H+'px';
+      cv.width=W*D;cv.height=H*D;s.x.setTransform(D,0,0,D,0,0);
+      if(!draw)draw=build(s);else if(draw.resize)draw.resize(ow,oh);
+      draw();
+    }
+    rs();
+    let last=performance.now();
+    (function loop(){if(!on)return;const n=performance.now();
+      if(!busy){s.k=Math.min(Math.max((n-last)/16.667,.2),3);draw()}   // frame skipped while zooming: main thread stays free for layout
+      last=n;requestAnimationFrame(loop)})();
+    if(stopMs)setTimeout(()=>{on=false},stopMs);
+    return {rs,stop:()=>{on=false}};
+  }
+  const jobs=[run('cvL',star,3400,1.5),run('cvM',net,0,1.5)].filter(Boolean);
+  /* one debounced resize: canvases are re-allocated ONCE after zoom/rotate settles, not on every step */
+  const root=document.documentElement;let lw=innerWidth,tm=0;
+  addEventListener('resize',()=>{
+    busy=true;root.classList.add('resizing');clearTimeout(tm);
+    tm=setTimeout(()=>{busy=false;root.classList.remove('resizing');
+      if(innerWidth!==lw){lw=innerWidth;jobs.forEach(j=>j.rs())}},180);
+  },{passive:true});
+  /* loader is gone after its fade: free its canvas */
+  const ld=document.getElementById('loader');
+  if(ld)ld.addEventListener('animationend',e=>{if(e.animationName==='hide'){jobs[0]&&jobs[0].stop();ld.remove()}});
+})();
+</script>
+<script>
+/* random green / blue loading bar on every refresh */
+(function(){
+  const g=Math.random()<.5, r=document.documentElement.style;
+  r.setProperty('--b1',g?'rgba(0,255,106,.55)':'rgba(0,160,255,.55)');
+  r.setProperty('--b2',g?'#00ff6a':'#00b4ff');
+  r.setProperty('--bg',g?'#00ff6a':'#00b4ff');
+})();
+</script>
+<script>
+/* toasts + success popup */
+const IG_USER = 'mr_captain_ofc'; // <- change to your Instagram username
+function toast(type, msg){
+  const box = document.getElementById('toasts'), t = document.createElement('div');
+  t.className = 'toast ' + type; t.textContent = msg; box.appendChild(t);
+  t.animate([{ opacity: 0, transform: 'translateX(90px) scale(.92)' }, { opacity: 1, transform: 'translateX(0) scale(1)' }],
+            { duration: 520, easing: 'cubic-bezier(.2,.9,.25,1)', fill: 'backwards' });
+  setTimeout(() => closeToast(t), 4200);
+}
+function closeToast(t){
+  if (t._c || !t.parentNode) return; t._c = 1;
+  const a = t.animate([{ opacity: 1, transform: 'translateX(0) scale(1)' }, { opacity: 0, transform: 'translateX(90px) scale(.92)' }],
+                      { duration: 420, easing: 'cubic-bezier(.5,0,.75,0)', fill: 'forwards' });
+  a.onfinish = () => {
+    const box = t.parentNode; if (!box) return;
+    const sibs = [...box.children].filter(e => e !== t), before = sibs.map(e => e.getBoundingClientRect().top);
+    t.remove();
+    sibs.forEach((e, i) => { const dy = before[i] - e.getBoundingClientRect().top;
+      if (dy) e.animate([{ transform: 'translateY(' + dy + 'px)' }, { transform: 'translateY(0)' }], { duration: 380, easing: 'cubic-bezier(.2,.9,.25,1)', composite: 'add' }); });
+  };
+}
+function showSuccess(n, repo, branch){
+  const ig = document.getElementById('iglink'); ig.style.pointerEvents = 'none'; setTimeout(() => ig.style.pointerEvents = '', 900);
+  document.getElementById('igname').textContent = '@' + IG_USER;
+  document.getElementById('iglink').href = 'https://instagram.com/' + IG_USER;
+  document.getElementById('okpop').classList.add('show');
+}
+function closeOk(){ document.getElementById('okpop').classList.remove('show'); const f = window._afterOk; window._afterOk = null; if (f) setTimeout(f, 280); }
+document.getElementById('okclose').addEventListener('click', closeOk);
+document.getElementById('okpop').addEventListener('click', e => { if (e.target.id === 'okpop') closeOk(); });
+</script>
+<script>
+/* paste button for the token field */
+document.getElementById('paste').addEventListener('click', async () => {
+  try {
+    const t = (await navigator.clipboard.readText()).trim();
+    if (!t) return toast('err', 'Clipboard is empty');
+    document.getElementById('token').value = t; toast('ok', '📋 Ꭲᴏᴋᴇɴ ᴘᴀsᴛᴇᴅ');
+  } catch (e) { toast('err', 'Allow clipboard access, or long-press the field and paste'); }
+});
+</script>
+<script>
+/* PC layout: reuse the card's own heading / credit (keeps your edits) */
+(function(){
+  const c=document.querySelector('.card');
+  const ph=document.getElementById('pchead'), pf=document.getElementById('pcfoot');
+  const h=c.querySelector('h1');h.dataset.t=h.textContent;
+  ph.appendChild(h.cloneNode(true));
+  ph.appendChild(c.querySelector('.sub').cloneNode(true));
+  pf.appendChild(c.querySelector('.foot').cloneNode(true));
+})();
+</script>
+<script>
+/* rotate the phone: title, subtitle and credit re-enter, slow and soft.
+   sideways = letters spread out; back to normal = glide in with a gentle blur */
+(function(){
+  const E='cubic-bezier(.22,.61,.36,1)';
+  const SET={
+    land:{
+      title:{kf:[{opacity:0,letterSpacing:'14px',filter:'blur(8px)'},{opacity:1,letterSpacing:'3px',filter:'blur(0px)'}],dur:900,delay:0},
+      sub:{kf:[{opacity:0,transform:'translateY(-14px)',filter:'blur(6px)'},{opacity:1,transform:'translateY(0)',filter:'blur(0px)'}],dur:800,delay:120},
+      foot:{kf:[{opacity:0,transform:'translateY(22px)'},{opacity:1,transform:'translateY(0)'}],dur:800,delay:220}
+    },
+    port:{
+      title:{kf:[{opacity:0,transform:'translateY(-30px) scale(.9)',filter:'blur(12px)'},{opacity:1,transform:'translateY(0) scale(1)',filter:'blur(0px)'}],dur:1700,delay:0},
+      sub:{kf:[{opacity:0,transform:'translateY(16px)',filter:'blur(8px)'},{opacity:1,transform:'translateY(0)',filter:'blur(0px)'}],dur:1500,delay:300},
+      foot:{kf:[{opacity:0,transform:'translateY(34px) scale(.92)',filter:'blur(6px)'},{opacity:1,transform:'translateY(0) scale(1)',filter:'blur(0px)'}],dur:1600,delay:550}
+    }
+  };
+  const SEL={title:'.card h1,#pchead h1',sub:'.card .sub,#pchead .sub',foot:'.card .foot,#pcfoot .foot'};
+  let running=[],tk=0;
+  function replay(){
+    const ld=document.getElementById('loader');
+    if(ld && getComputedStyle(ld).visibility!=='hidden') return;
+    const my=++tk;
+    running.forEach(a=>a.cancel());running=[];
+    if(!mq.matches) return;                                      // back to normal (portrait): no animation, only when turning sideways
+    const all=document.querySelectorAll(Object.values(SEL).join(','));
+    all.forEach(el=>el.style.opacity='0');                       // hidden at once: no flash while the layout turns
+    requestAnimationFrame(()=>requestAnimationFrame(()=>setTimeout(()=>{
+      if(my!==tk) return;                                        // a newer turn took over
+      const set=mq.matches?SET.land:SET.port;
+      Object.keys(SEL).forEach(kind=>document.querySelectorAll(SEL[kind]).forEach(el=>{
+        if(!el.getClientRects().length) return;
+        const o=set[kind];
+        const an=el.animate(o.kf,{duration:o.dur,easing:E,delay:o.delay,fill:'both'});
+        an.onfinish=()=>{try{an.cancel()}catch(e){}};
+        running.push(an);
+      }));
+      all.forEach(el=>el.style.opacity='');                      // animations now hold the hidden start state
+    },120)));                                                    // wait until the new layout has settled
+  }
+  const mq=matchMedia('(orientation:landscape)');
+  if(mq.addEventListener) mq.addEventListener('change',replay); else mq.addListener(replay);
+})();
+</script>
+</body>
+</html>
