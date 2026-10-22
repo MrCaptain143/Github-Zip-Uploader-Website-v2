@@ -652,7 +652,7 @@ document.getElementById('paste').addEventListener('click', async () => {
   try {
     const t = (await navigator.clipboard.readText()).trim();
     if (!t) return toast('err', 'Clipboard is empty');
-    document.getElementById('token').value = t; toast('ok', '📋 Ꭲᴏᴋᴇɴ ᴘᴀsᴛᴇᴅ');
+    document.getElementById('token').value = t;
   } catch (e) { toast('err', 'Allow clipboard access, or long-press the field and paste'); }
 });
 </script>
