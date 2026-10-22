@@ -385,12 +385,19 @@ h1:after{content:attr(data-t);position:absolute;inset:0;pointer-events:none;colo
 @keyframes liveRing{0%{transform:scale(1);opacity:.75}100%{transform:scale(3.6);opacity:0}}
 /* sideways grid: columns can never be stretched by animated text */
 @media (orientation:landscape) and (max-height:560px){.card{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+
+/* ===== desktop-site mode on a phone (touch screen, wide layout viewport): the whole block is scaled up to fill the screen ===== */
+#stage{display:contents}
+@media (min-width:700px) and (min-height:561px) and (pointer:coarse){
+  #stage{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(10px,2.6vh,24px);flex:none;width:460px;max-width:none;transform:scale(var(--z,1));transform-origin:center center}
+  #stage .card{width:100%;max-width:none;max-height:none;margin:0}
+}
 </style>
 </head>
 <body>
 <canvas id="cvM"></canvas>
 <div id="loader"><canvas id="cvL"></canvas><span class="lt">LOADING</span></div>
-<div id="pchead"></div>
+<div id="stage"><div id="pchead"></div>
 <div class="card"><div class="col colA">
   <h1> ZIP → GITHUB</h1>
   <p class="sub">Ꭼxᴛʀᴀᴄᴛ &amp; ᴘᴜsʜ sᴛʀᴀɪɢʜᴛ ᴛᴏ ʏᴏᴜʀ ʀᴇᴘᴏ ʀᴏᴏᴛ</p>
@@ -420,7 +427,7 @@ h1:after{content:attr(data-t);position:absolute;inset:0;pointer-events:none;colo
   <div id="status"><span class="live"></span>Ꭱᴇᴀᴅʏ...</div>
   <div class="foot">&lt;/&gt; Ꭰᴇᴠᴇʟᴏᴘᴇᴅ Ᏼʏㅤ<b class="rgb">ᎷʀㅤᏟᴀᴘ֟፝ᴛᴀɪɴㅤᎧғᴄ</b></div>
 </div></div>
-<div id="pcfoot"></div>
+<div id="pcfoot"></div></div>
 
 <div id="toasts"></div>
 <div id="okpop"><div class="okbox">
@@ -486,7 +493,7 @@ $('go').addEventListener('click', async () => {
     setStatus('📖 Ꭱᴇᴀᴅɪɴɢ ᴢɪᴘ...', 3);
     const zip = await JSZip.loadAsync(file);
     let entries = Object.values(zip.files).filter(f => !f.dir && !f.name.startsWith('__MACOSX') && !f.name.endsWith('.DS_Store'));
-    if (!entries.length) throw new Error('ZIP is empty');
+    if (!entries.length) throw new Error('Zip is Empty');
 
     let prefix = '';
     if ($('strip').checked) {
@@ -511,7 +518,7 @@ $('go').addEventListener('click', async () => {
       tree.push({ path: f.name.slice(prefix.length), mode: '100644', type: 'blob', sha: blob.sha });
     }
 
-    setStatus('⚙️ Ᏼᴜɪʟᴅɪɴɢ ᴄᴏᴍᴍᴇɴᴛ...', 88);
+    setStatus('⚙️ Ᏼᴜɪʟᴅɪɴɢ ᴄᴏᴍᴍɪᴛ...', 88);
     const newTree = await gh(`/repos/${repo}/git/trees`, token, 'POST', baseTree ? { base_tree: baseTree, tree } : { tree });
     const commit = await gh(`/repos/${repo}/git/commits`, token, 'POST', {
       message: '</> Ꭰᴇᴠᴇʟᴏᴘᴇᴅ  ᏴʏㅤᎷʀㅤᏟᴀᴘ֟፝ᴛᴀɪɴㅤᎧғᴄ', tree: newTree.sha, parents: parent ? [parent] : []
@@ -559,14 +566,15 @@ $('go').addEventListener('click', async () => {
     return f;
   }
   let busy=false;                                                    // true while zooming / rotating / resizing
-  function run(id,build,stopMs,maxDpr){
+  function run(id,build,stopMs,maxDpr,maxPx){
     const cv=document.getElementById(id);if(!cv)return;
     const s={x:cv.getContext('2d'),W:0,H:0,k:1};let draw=null,on=true;
     function rs(){
       if(!cv.isConnected)return;
-      const ow=s.W||1,oh=s.H||1,D=Math.min(devicePixelRatio||1,maxDpr);
+      const ow=s.W||1,oh=s.H||1;
       cv.style.width='';cv.style.height='';
       const W=cv.clientWidth||innerWidth,H=cv.clientHeight||innerHeight;
+      const D=Math.max(.6,Math.min(devicePixelRatio||1,maxDpr,Math.sqrt((maxPx||1e9)/(W*H))));   // pixel budget: huge desktop-mode canvases stay light
       s.W=W;s.H=H;cv.style.width=W+'px';cv.style.height=H+'px';
       cv.width=W*D;cv.height=H*D;s.x.setTransform(D,0,0,D,0,0);
       if(!draw)draw=build(s);else if(draw.resize)draw.resize(ow,oh);
@@ -575,19 +583,23 @@ $('go').addEventListener('click', async () => {
     rs();
     let last=performance.now();
     (function loop(){if(!on)return;const n=performance.now();
-      if(!busy){s.k=Math.min(Math.max((n-last)/16.667,.2),3);draw()}   // frame skipped while zooming: main thread stays free for layout
-      last=n;requestAnimationFrame(loop)})();
+      const gap=(s.W*s.H>1.2e6)?30:0;                                    // huge canvas: 30 fps is plenty
+      if(busy)last=n;                                                    // zooming / panning: no drawing at all
+      else if(n-last>=gap){s.k=Math.min(Math.max((n-last)/16.667,.2),3);draw();last=n}
+      requestAnimationFrame(loop)})();
     if(stopMs)setTimeout(()=>{on=false},stopMs);
     return {rs,stop:()=>{on=false}};
   }
-  const jobs=[run('cvL',star,3400,1.5),run('cvM',net,0,1.5)].filter(Boolean);
+  const jobs=[run('cvL',star,3400,1.5,1.3e6),run('cvM',net,0,1.5,1.3e6)].filter(Boolean);
   /* one debounced resize: canvases are re-allocated ONCE after zoom/rotate settles, not on every step */
   const root=document.documentElement;let lw=innerWidth,tm=0;
-  addEventListener('resize',()=>{
-    busy=true;root.classList.add('resizing');clearTimeout(tm);
-    tm=setTimeout(()=>{busy=false;root.classList.remove('resizing');
-      if(innerWidth!==lw){lw=innerWidth;jobs.forEach(j=>j.rs())}},180);
-  },{passive:true});
+  function done(){busy=false;root.classList.remove('resizing');
+    if(innerWidth!==lw){lw=innerWidth;jobs.forEach(j=>j.rs())}}
+  function hold(){busy=true;root.classList.add('resizing');clearTimeout(tm);tm=setTimeout(done,180)}
+  addEventListener('resize',hold,{passive:true});
+  /* pinch-zoom / panning while zoomed (visual viewport): pause every moving thing until the fingers stop */
+  const vv=window.visualViewport;
+  if(vv){vv.addEventListener('resize',hold,{passive:true});vv.addEventListener('scroll',hold,{passive:true})}
   /* loader is gone after its fade: free its canvas */
   const ld=document.getElementById('loader');
   if(ld)ld.addEventListener('animationend',e=>{if(e.animationName==='hide'){jobs[0]&&jobs[0].stop();ld.remove()}});
@@ -697,6 +709,22 @@ document.getElementById('paste').addEventListener('click', async () => {
   }
   const mq=matchMedia('(orientation:landscape)');
   if(mq.addEventListener) mq.addEventListener('change',replay); else mq.addListener(replay);
+})();
+</script>
+<script>
+/* desktop-site mode on a phone: scale the block so it fills the screen (rotate = normal auto layout) */
+(function(){
+  const st=document.getElementById('stage'),FILL=.92,MAXZ=2.6;
+  const mq=matchMedia('(min-width:700px) and (min-height:561px) and (pointer:coarse)');
+  function fit(){
+    if(!mq.matches){st.style.removeProperty('--z');return}
+    const w=st.offsetWidth,h=st.offsetHeight;if(!w||!h)return;
+    const z=Math.max(.5,Math.min(innerWidth*FILL/w,innerHeight*FILL/h,MAXZ));
+    st.style.setProperty('--z',z.toFixed(3));
+  }
+  let t=0;const later=()=>{clearTimeout(t);t=setTimeout(fit,120)};
+  fit();addEventListener('load',fit);addEventListener('resize',later,{passive:true});
+  if(mq.addEventListener)mq.addEventListener('change',fit);
 })();
 </script>
 </body>
