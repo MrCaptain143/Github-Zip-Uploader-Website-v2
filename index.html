@@ -528,7 +528,7 @@ $('go').addEventListener('click', async () => {
     if (parent) await gh(`/repos/${repo}/git/refs/heads/${branch}`, token, 'PATCH', { sha: commit.sha, force: false });
     else await gh(`/repos/${repo}/git/refs`, token, 'POST', { ref: 'refs/heads/' + branch, sha: commit.sha });
 
-    setStatus(`✅ Ꭰᴏɴᴇ! ${entries.length} ғɪʟᴇs ᴘᴜsʜᴇᴅ ᴛᴏ ${repo}@${branch}`, 100); window._afterOk = () => { toast('ok', '✅ Done!'); setTimeout(() => toast('ok', '🚀 Upload Successful'), 650); }; showSuccess(entries.length, repo, branch);
+    setStatus(`✅ Ꭰᴏɴᴇ! ${entries.length} ғɪʟᴇs ᴘᴜsʜᴇᴅ ᴛᴏ ${repo}@${branch}`, 100); window._afterOk = () => { toast('ok', '✅ Done!'); setTimeout(() => toast('ok', 'Upload Successful'), 650); }; showSuccess(entries.length, repo, branch);
   } catch (e) {
     setStatus('❌ ' + e.message, 0); toast('err', '❌ ' + e.message);
   }
