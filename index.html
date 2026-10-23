@@ -478,6 +478,15 @@ html,body{overscroll-behavior:none;touch-action:manipulation}
   #go{font-size:14px}
 }
 #msg{font-size:clamp(11px,3.5vw,13px)!important;letter-spacing:0}
+/* sideways: every box exactly the same height, same border, no extra glow that makes ZIP / push look bigger */
+@media (orientation:landscape) and (max-height:560px){
+  .pw,#token,#repo,#branch,#folder,#msg,.drop,.row,#go,
+  .colB>:nth-child(1),.colB>:nth-child(3){height:38px;min-height:38px;max-height:38px;box-sizing:border-box}
+  .drop{border-width:1px;animation:none!important}
+  #go{border-width:1px;box-shadow:0 0 12px rgba(255,255,255,.25),inset 0 1px 0 #fff}
+  #go:after{display:none}
+  .colB>:nth-child(1),.colB>:nth-child(3){margin-top:6px}
+}
 </style>
 </head>
 <body>
