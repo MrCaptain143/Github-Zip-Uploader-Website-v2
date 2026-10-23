@@ -833,7 +833,7 @@ addEventListener('scroll',()=>{ if(scrollX||scrollY) scrollTo(0,0); },{passive:t
 <script>
 /* fix: after the one-time glass sheen the card kept hidden overflow on its right, so long-pressing the pasted token let the browser scroll the card sideways */
 setTimeout(() => { const c = document.querySelector('.card'); if (c) c.classList.add('noshine'); }, 5800);
-document.addEventListener('scroll', e => { const t = e.target; if (t && t !== document && t.scrollLeft) t.scrollLeft = 0; }, true);
+document.addEventListener('scroll', e => { const t = e.target; if (t && t !== document && !(t.matches && t.matches('input,textarea')) && t.scrollLeft) t.scrollLeft = 0; }, true);
 </script>
 </body>
 </html>
