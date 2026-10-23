@@ -447,6 +447,9 @@ html,body{overscroll-behavior:none;touch-action:manipulation}
 #branch,#folder{font-size:14px!important;text-overflow:ellipsis}
 @media (max-width:440px){.pair label small{display:none}}
 #folder::placeholder{font-size:13px}
+#branch,#folder{padding-left:11px!important;padding-right:11px!important}
+#folder::placeholder{font-size:10px;letter-spacing:0}
+#folder::placeholder{font-size:clamp(10px,calc(5vw - 5.5px),14px)}
 </style>
 </head>
 <body>
@@ -465,7 +468,7 @@ html,body{overscroll-behavior:none;touch-action:manipulation}
 
   <div class="pair">
     <div class="f"><label>🌿 BRANCH</label><input type="text" id="branch" value="main" autocapitalize="off"></div>
-    <div class="f"><label>📂 TARGET FOLDER <small>(optional)</small></label><input type="text" id="folder" placeholder="dist / (leave empty)" autocapitalize="off" autocorrect="off"></div>
+    <div class="f"><label>📂 TARGET FOLDER <small>(optional)</small></label><input type="text" id="folder" placeholder="dist / public / (leave empty)" autocapitalize="off" autocorrect="off"></div>
   </div>
 
   <label>COMMIT MESSAGE</label>
