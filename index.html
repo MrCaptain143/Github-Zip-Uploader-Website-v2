@@ -470,6 +470,14 @@ html,body{overscroll-behavior:none;touch-action:manipulation}
   .drop{font-size:11px}
 }
 .card.noshine:before{display:none!important}
+/* message box is a normal box now; sideways: ZIP box and push button are the same size as every other box */
+#msg{font-size:15px!important}
+@media (orientation:landscape) and (max-height:560px){
+  .colB>:nth-child(1),.colB>:nth-child(3){height:38px;margin-top:6px}
+  .drop{font-size:10.5px;line-height:1.2;padding:2px 8px}
+  #go{font-size:14px}
+}
+#msg{font-size:clamp(11px,3.5vw,13px)!important;letter-spacing:0}
 </style>
 </head>
 <body>
@@ -557,8 +565,7 @@ async function gh(path, token, method = 'GET', body) {
 }
 
 const CREDIT = '</> Ꭰᴇᴠᴇʟᴏᴘᴇᴅ  ᏴʏㅤᎷʀㅤᏟᴀᴘ֟፝ᴛᴀɪɴㅤᎧғᴄ'; // always added to the commit message, even when the message box is empty
-$('msg').value = CREDIT;
-$('msg').addEventListener('blur', () => { if (!$('msg').value.trim()) $('msg').value = CREDIT; });
+$('msg').value = CREDIT; // filled when the page opens; it is NEVER refilled after the user deletes it
 $('go').addEventListener('click', async () => {
   const token = $('token').value.trim(), repo = $('repo').value.trim().replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, ''), branch = $('branch').value.trim() || 'main';
   const file = $('zip').files[0];
