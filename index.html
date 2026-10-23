@@ -392,6 +392,61 @@ h1:after{content:attr(data-t);position:absolute;inset:0;pointer-events:none;colo
   #stage{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(10px,2.6vh,24px);flex:none;width:460px;max-width:none;transform:scale(var(--z,1));transform-origin:center center}
   #stage .card{width:100%;max-width:none;max-height:none;margin:0}
 }
+/* branch | target folder row, commit message */
+.pair{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:10px}
+.pair .f{min-width:0}
+.pair label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px;letter-spacing:.6px}
+.pair label small{font-size:9px;letter-spacing:0;text-transform:lowercase;color:#bbb}
+@media (orientation:landscape) and (max-height:560px){
+  .card{grid-template-rows:auto auto minmax(4px,1fr) auto auto auto auto auto auto auto auto auto minmax(2px,.6fr) auto}
+  .colA>:nth-child(1){grid-area:1/1/2/3}
+  .colA>:nth-child(2){grid-area:2/1/3/3}
+  .colA>:nth-child(3){grid-area:4/1/5/2}
+  .colA>:nth-child(4){grid-area:5/1/6/2}
+  .colA>:nth-child(5){grid-area:6/1/7/2}
+  .colA>:nth-child(6){grid-area:7/1/8/2}
+  .colA>:nth-child(7){grid-area:8/1/9/2}
+  .colA>:nth-child(8){grid-area:9/1/10/3}
+  .colA>:nth-child(9){grid-area:10/1/11/3}
+  .colB>:nth-child(1){grid-area:5/2/6/3}
+  .colB>:nth-child(2){grid-area:7/2/8/3}
+  .colB>:nth-child(3){grid-area:8/2/9/3;align-self:end}
+  .colB>:nth-child(4){grid-area:11/1/12/3}
+  .colB>:nth-child(5){grid-area:12/1/13/3}
+  .colB>:nth-child(6){grid-area:14/1/15/3}
+  .pw,#token,#repo,#branch,#folder,#msg,.drop,.row,#go{height:38px}
+  label{margin:4px 0 2px;font-size:10px}
+  .pair label{font-size:9px}
+  #go{height:38px}
+}
+/* Branch and Target Folder on exactly the same level */
+.pair{align-items:end}
+.pair .f{display:flex;flex-direction:column;justify-content:flex-end}
+.pair label{height:14px;line-height:14px}
+/* watermark inside the empty message box */
+#msg::placeholder{color:rgba(255,255,255,.78)}
+/* 16px inputs: no zoom-in when a field is focused; page can never be pushed inside */
+input[type=text],input[type=password]{font-size:16px!important}
+html,body{overscroll-behavior:none;touch-action:manipulation}
+/* sideways: message box goes up (beside Repository), the push button goes last, full width */
+@media (orientation:landscape) and (max-height:560px){
+  .card{grid-template-rows:auto auto minmax(4px,1fr) auto auto auto auto auto auto auto auto minmax(2px,.6fr) auto}
+  .colA>:nth-child(7){grid-area:8/1/9/2}
+  .colA>:nth-child(8){grid-area:6/2/7/3}
+  .colA>:nth-child(9){grid-area:7/2/8/3}
+  .colB>:nth-child(2){grid-area:8/2/9/3;align-self:end}
+  .colB>:nth-child(3){grid-area:9/1/10/3;margin-top:6px}
+  .colB>:nth-child(4){grid-area:10/1/11/3}
+  .colB>:nth-child(5){grid-area:11/1/12/3}
+  .colB>:nth-child(6){grid-area:13/1/14/3}
+}
+/* watermark fully visible inside the message box */
+#msg{font-size:clamp(11px,3.5vw,13px)!important;letter-spacing:0;padding-left:12px;padding-right:12px}
+/* Branch and Target Folder: two equal boxes */
+.pair{grid-template-columns:1fr 1fr}
+#branch,#folder{font-size:14px!important;text-overflow:ellipsis}
+@media (max-width:440px){.pair label small{display:none}}
+#folder::placeholder{font-size:13px}
 </style>
 </head>
 <body>
@@ -408,8 +463,13 @@ h1:after{content:attr(data-t);position:absolute;inset:0;pointer-events:none;colo
   <label>📦 REPOSITORY</label>
   <input type="text" id="repo" placeholder="username/repository" autocapitalize="off" autocorrect="off">
 
-  <label>🌿 BRANCH</label>
-  <input type="text" id="branch" value="main" autocapitalize="off">
+  <div class="pair">
+    <div class="f"><label>🌿 BRANCH</label><input type="text" id="branch" value="main" autocapitalize="off"></div>
+    <div class="f"><label>📂 TARGET FOLDER <small>(optional)</small></label><input type="text" id="folder" placeholder="dist / (leave empty)" autocapitalize="off" autocorrect="off"></div>
+  </div>
+
+  <label>COMMIT MESSAGE</label>
+  <input type="text" id="msg" placeholder="Enter your message" autocomplete="off">
 
 </div><div class="col colB">
   <label class="drop" id="drop">
@@ -473,9 +533,14 @@ async function gh(path, token, method = 'GET', body) {
   return j;
 }
 
+const CREDIT = '</> Ꭰᴇᴠᴇʟᴏᴘᴇᴅ  ᏴʏㅤᎷʀㅤᏟᴀᴘ֟፝ᴛᴀɪɴㅤᎧғᴄ'; // always added to the commit message, even when the message box is empty
+$('msg').value = CREDIT;
+$('msg').addEventListener('blur', () => { if (!$('msg').value.trim()) $('msg').value = CREDIT; });
 $('go').addEventListener('click', async () => {
   const token = $('token').value.trim(), repo = $('repo').value.trim().replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, ''), branch = $('branch').value.trim() || 'main';
   const file = $('zip').files[0];
+  const folder = $('folder').value.trim().replace(/\\/g, '/').split('/').filter(x => x && x !== '.' && x !== '..').join('/');
+  const userMsg = $('msg').value.trim();
   const errs = [], bad = [];
   if (!token) { errs.push('🔐 GitHub token is required'); bad.push($('token')); }
   if (!repo) { errs.push('📦 Empty - username/repository'); bad.push($('repo')); }
@@ -515,20 +580,20 @@ $('go').addEventListener('click', async () => {
       setStatus(`⬆️ ᴜᴘʟᴏᴀᴅɪɴɢ ${i + 1}/${entries.length}: ${f.name.slice(prefix.length)}`, 10 + (i / entries.length) * 75);
       const b64 = await f.async('base64');
       const blob = await gh(`/repos/${repo}/git/blobs`, token, 'POST', { content: b64, encoding: 'base64' });
-      tree.push({ path: f.name.slice(prefix.length), mode: '100644', type: 'blob', sha: blob.sha });
+      tree.push({ path: (folder ? folder + '/' : '') + f.name.slice(prefix.length), mode: '100644', type: 'blob', sha: blob.sha });
     }
 
     setStatus('⚙️ Ᏼᴜɪʟᴅɪɴɢ ᴄᴏᴍᴍɪᴛ...', 88);
     const newTree = await gh(`/repos/${repo}/git/trees`, token, 'POST', baseTree ? { base_tree: baseTree, tree } : { tree });
     const commit = await gh(`/repos/${repo}/git/commits`, token, 'POST', {
-      message: '</> Ꭰᴇᴠᴇʟᴏᴘᴇᴅ  ᏴʏㅤᎷʀㅤᏟᴀᴘ֟፝ᴛᴀɪɴㅤᎧғᴄ', tree: newTree.sha, parents: parent ? [parent] : []
+      message: userMsg.includes(CREDIT) ? userMsg : (userMsg ? userMsg + ' ' : '') + CREDIT, tree: newTree.sha, parents: parent ? [parent] : []
     });
 
     setStatus('🚀 Ꮲᴜsʜɪɴɢ...', 95);
     if (parent) await gh(`/repos/${repo}/git/refs/heads/${branch}`, token, 'PATCH', { sha: commit.sha, force: false });
     else await gh(`/repos/${repo}/git/refs`, token, 'POST', { ref: 'refs/heads/' + branch, sha: commit.sha });
 
-    setStatus(`✅ Ꭰᴏɴᴇ! ${entries.length} ғɪʟᴇs ᴘᴜsʜᴇᴅ ᴛᴏ ${repo}@${branch}`, 100); window._afterOk = () => { toast('ok', '✅ Done!'); setTimeout(() => toast('ok', 'Upload Successful'), 650); }; showSuccess(entries.length, repo, branch);
+    setStatus(`✅ Ꭰᴏɴᴇ! ${entries.length} ғɪʟᴇs ᴘᴜsʜᴇᴅ ᴛᴏ ${repo}@${branch}`, 100); window._afterOk = () => { toast('ok', '✅ Done!'); setTimeout(() => toast('ok', '🚀 Upload Successful'), 650); }; showSuccess(entries.length, repo, branch);
   } catch (e) {
     setStatus('❌ ' + e.message, 0); toast('err', '❌ ' + e.message);
   }
@@ -726,6 +791,10 @@ document.getElementById('paste').addEventListener('click', async () => {
   fit();addEventListener('load',fit);addEventListener('resize',later,{passive:true});
   if(mq.addEventListener)mq.addEventListener('change',fit);
 })();
+</script>
+<script>
+/* keep the page from being scrolled/pushed when a field is focused or text is selected */
+addEventListener('scroll',()=>{ if(scrollX||scrollY) scrollTo(0,0); },{passive:true});
 </script>
 </body>
 </html>
