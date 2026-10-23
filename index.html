@@ -565,7 +565,11 @@ async function gh(path, token, method = 'GET', body) {
 }
 
 const CREDIT = '</> Ꭰᴇᴠᴇʟᴏᴘᴇᴅ  ᏴʏㅤᎷʀㅤᏟᴀᴘ֟፝ᴛᴀɪɴㅤᎧғᴄ'; // always added to the commit message, even when the message box is empty
-$('msg').value = CREDIT; // filled when the page opens; it is NEVER refilled after the user deletes it
+// message box: filled with the watermark only the FIRST time the page opens in this tab.
+// If the user deletes it, it stays empty (even if the browser reloads the page while the ZIP picker is open).
+let _savedMsg = null; try { _savedMsg = sessionStorage.getItem('cap_msg'); } catch (e) {}
+$('msg').value = (_savedMsg === null) ? CREDIT : _savedMsg;
+$('msg').addEventListener('input', () => { try { sessionStorage.setItem('cap_msg', $('msg').value); } catch (e) {} });
 $('go').addEventListener('click', async () => {
   const token = $('token').value.trim(), repo = $('repo').value.trim().replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, ''), branch = $('branch').value.trim() || 'main';
   const file = $('zip').files[0];
