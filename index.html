@@ -450,6 +450,26 @@ html,body{overscroll-behavior:none;touch-action:manipulation}
 #branch,#folder{padding-left:11px!important;padding-right:11px!important}
 #folder::placeholder{font-size:10px;letter-spacing:0}
 #folder::placeholder{font-size:clamp(10px,calc(5vw - 5.5px),14px)}
+/* sideways order: Token | Repository, Branch | Target Folder, Commit message | Strip root, ZIP file | Extract & Push */
+@media (orientation:landscape) and (max-height:560px){
+  .colA>:nth-child(3){grid-area:4/1/5/2}
+  .colA>:nth-child(4){grid-area:5/1/6/2}
+  .colA>:nth-child(5){grid-area:4/2/5/3}
+  .colA>:nth-child(6){grid-area:5/2/6/3}
+  .colA>:nth-child(7){display:contents}
+  .colA>:nth-child(7)>.f:nth-child(1){grid-area:6/1/7/2}
+  .colA>:nth-child(7)>.f:nth-child(2){grid-area:6/2/7/3}
+  .colA>:nth-child(8){grid-area:7/1/8/2}
+  .colA>:nth-child(9){grid-area:8/1/9/2}
+  .colB>:nth-child(2){grid-area:8/2/9/3;align-self:end}
+  .colB>:nth-child(1){grid-area:9/1/10/2;margin-top:6px;height:42px}
+  .colB>:nth-child(3){grid-area:9/2/10/3;margin-top:6px;height:42px}
+  .colB>:nth-child(4){grid-area:10/1/11/3}
+  .colB>:nth-child(5){grid-area:11/1/12/3}
+  .colB>:nth-child(6){grid-area:13/1/14/3}
+  .drop{font-size:11px}
+}
+.card.noshine:before{display:none!important}
 </style>
 </head>
 <body>
@@ -798,6 +818,11 @@ document.getElementById('paste').addEventListener('click', async () => {
 <script>
 /* keep the page from being scrolled/pushed when a field is focused or text is selected */
 addEventListener('scroll',()=>{ if(scrollX||scrollY) scrollTo(0,0); },{passive:true});
+</script>
+<script>
+/* fix: after the one-time glass sheen the card kept hidden overflow on its right, so long-pressing the pasted token let the browser scroll the card sideways */
+setTimeout(() => { const c = document.querySelector('.card'); if (c) c.classList.add('noshine'); }, 5800);
+document.addEventListener('scroll', e => { const t = e.target; if (t && t !== document && t.scrollLeft) t.scrollLeft = 0; }, true);
 </script>
 </body>
 </html>
